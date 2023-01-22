@@ -4,7 +4,7 @@ import 'package:gigabull/network_cache/storage_service.dart';
 import '../models/cache_item.dart';
 import 'network_response.dart';
 
-class HttpCacheBase<T extends CacheItem> {
+class HttpCache<T extends CacheItem> {
   final StorageService storage;
   final HttpService http;
 
