@@ -4,5 +4,5 @@
 library http_cache;
 
 export 'src/http_cache_base.dart';
-
-// TODO: Export any libraries intended for clients of this package.
+export 'src/network_response.dart';
+export 'src/caches_network_request.dart';
