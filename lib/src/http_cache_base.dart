@@ -8,7 +8,7 @@ class HttpCache<T extends CacheItem> {
   final StorageService storage;
   final HttpService http;
 
-  NetworkCache({required this.storage, required this.http});
+  HttpCache({required this.storage, required this.http});
 
   Future<void> updateCache<Type>(T networkValue, String cacheKey) async {
     networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
