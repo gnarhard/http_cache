@@ -1,21 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 
-class NetworkResponse<S, F> {
-  S? _s;
-  F? _f;
+class NetworkResponse<Success, Failure> {
+  Success? _success;
+  Failure? _failure;
 
-  factory NetworkResponse.success(S s) => NetworkResponse._(s, null);
+  factory NetworkResponse.success(Success success) =>
+      NetworkResponse._(success, null);
 
-  factory NetworkResponse.failure(F f) => NetworkResponse._(null, f);
+  factory NetworkResponse.failure(Failure failure) =>
+      NetworkResponse._(null, failure);
 
-  NetworkResponse._(this._s, this._f);
+  NetworkResponse._(this._success, this._failure);
 
-  bool isSuccessful() => _f == null;
+  bool isSuccessful() => _failure == null;
 
-  S? result() => _s;
+  Success? result() => _success;
 
-  F? failure() => _f;
+  Failure? failure() => _failure;
 }
 
 class NetworkException {
