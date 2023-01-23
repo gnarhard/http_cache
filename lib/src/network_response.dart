@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart';
 
 class NetworkResponse<Success, Failure> {

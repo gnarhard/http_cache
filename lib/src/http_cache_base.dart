@@ -1,12 +1,11 @@
-import 'package:gigabull/network_cache/http_service.dart';
-import 'package:gigabull/network_cache/storage_service.dart';
+import 'dart:io';
 
-import '../models/cache_item.dart';
-import 'network_response.dart';
+import 'package:http_cache/http_cache.dart';
+import 'package:http_cache/src/request_returns_network_response.dart';
 
-class HttpCache<T extends CacheItem> {
-  final StorageService storage;
-  final HttpService http;
+class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
+  final CachesNetworkRequest storage;
+  final HttpClient http;
 
   HttpCache({required this.storage, required this.http});
 
@@ -30,7 +29,7 @@ class HttpCache<T extends CacheItem> {
 
   Future<T?> requestFromNetwork(
       Function networkRequest, Function fromJson) async {
-    NetworkResponse response = await http.makeRequest(networkRequest);
+    NetworkResponse response = await makeRequest(networkRequest);
 
     if (!response.isSuccessful()) {
       return null;
