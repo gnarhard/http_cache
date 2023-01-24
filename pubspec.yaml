@@ -8,6 +8,23 @@ environment:
 dev_dependencies:
   lints: ^2.0.0
   test: ^1.16.0
+  hive_flutter: ^1.1.0
+  json_serializable: ^6.6.0
+  hive_storage_service:
+    git:
+      url: https://github.com/gnarhard/hive_storage_service.git
+      ref: main
+  mock_storage_service:
+    git:
+      url: https://github.com/gnarhard/mock_storage_service.git
+      ref: main
+  http_service:
+    git:
+      url: https://github.com/gnarhard/http_service.git
+      ref: main
+  json_annotation: ^4.8.0
+  build_runner: ^2.3.3
+  hive: ^2.2.3
 dependencies:
   http: ^0.13.5
   flutter:

@@ -17,11 +17,11 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
       Duration? ttlDuration,
       required Function fromJson}) async {
     if (ttlDuration == null) {
-      return await checkCacheFirst(
-          networkRequest, cacheKey, ttlDuration!, fromJson);
+      return await overwrite(networkRequest, cacheKey, fromJson);
     }
 
-    return await overwrite(networkRequest, cacheKey, fromJson);
+    return await checkCacheFirst(
+        networkRequest, cacheKey, ttlDuration!, fromJson);
   }
 
   Future<T?> requestFromNetwork(
