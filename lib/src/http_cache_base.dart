@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
@@ -27,14 +28,36 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
 
   Future<T?> requestFromNetwork(Future<http.Response> Function() networkRequest,
       Function fromJson) async {
-    NetworkResponse response = await makeRequest(networkRequest);
+    NetworkResponse<Map<String, dynamic>?, NetworkException> response =
+        await makeRequest(networkRequest);
 
     if (!response.isSuccessful()) {
+      if (kDebugMode) {
+        response.printError();
+      }
       return null;
     }
 
-    T data = fromJson(response.result());
+    final jsonData = getJsonData(response);
+    if (jsonData == null) {
+      return null;
+    }
+
+    T data = fromJson(jsonData);
     return data;
+  }
+
+  Map<String, dynamic>? getJsonData(response) {
+    final result = response.result();
+    if (result == null) {
+      return null;
+    }
+
+    if (result['data'] == null) {
+      return null;
+    }
+
+    return result['data'];
   }
 
   Future<T?> checkCacheFirst(Future<http.Response> Function() networkRequest,

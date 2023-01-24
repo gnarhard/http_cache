@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart';
 
-class NetworkResponse<Success, Failure> {
+class NetworkResponse<Success, NetworkException> {
   Success? _success;
-  Failure? _failure;
+  NetworkException? _failure;
 
   factory NetworkResponse.success(Success success) =>
       NetworkResponse._(success, null);
 
-  factory NetworkResponse.failure(Failure failure) =>
+  factory NetworkResponse.failure(NetworkException failure) =>
       NetworkResponse._(null, failure);
 
   NetworkResponse._(this._success, this._failure);
@@ -17,23 +17,24 @@ class NetworkResponse<Success, Failure> {
 
   Success? result() => _success;
 
-  Failure? failure() => _failure;
+  NetworkException? failure() => _failure;
+
+  void printError() {
+    // String errorMessage =
+    //     "Error ${_failure!.response.statusCode}: ${_failure!.response.reasonPhrase}";
+
+    if (kDebugMode) {
+      print(_failure);
+    }
+  }
 }
 
 class NetworkException {
   final Response? response;
+  final dynamic error;
   final NetworkError type;
 
-  const NetworkException({this.response, required this.type});
-
-  void displayError() {
-    String errorMessage =
-        "Error ${response!.statusCode}: ${response!.reasonPhrase}";
-    if (kDebugMode) {
-      print(errorMessage);
-    }
-    // ToastService.error(message: errorMessage, response: response);
-  }
+  const NetworkException({this.response, required this.type, this.error});
 }
 
 enum NetworkError {

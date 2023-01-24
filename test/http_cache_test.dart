@@ -19,7 +19,7 @@ void main() {
         apiNamespace: '/api/v1',
         apiUrl: 'https://example.com/api/v1',
         publicImgPath: 'https://example.com/images',
-        siteUrl: 'https://example.com',
+        siteBaseUrl: 'https://example.com',
         hasConnectivity: () => true,
         getAuthTokenCallback: () => token);
 

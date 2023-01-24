@@ -8,7 +8,7 @@ import 'network_response.dart';
 
 mixin RequestReturnsNetworkResponse {
   Future<NetworkResponse<Map<String, dynamic>, NetworkException>>
-      makeRequest<Type>(Function request) async {
+      makeRequest<Type>(Future<http.Response> Function() request) async {
     try {
       http.Response response = await request();
 
@@ -28,7 +28,7 @@ mixin RequestReturnsNetworkResponse {
           const NetworkException(type: NetworkError.couldNotReachServer));
     } catch (error) {
       return NetworkResponse.failure(
-          const NetworkException(type: NetworkError.serverError));
+          NetworkException(type: NetworkError.serverError, error: error));
     }
   }
 }
