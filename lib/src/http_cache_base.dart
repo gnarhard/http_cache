@@ -1,3 +1,4 @@
+import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
@@ -13,7 +14,7 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
 
   Future<T?> request(
       {required String cacheKey,
-      required Function networkRequest,
+      required Future<http.Response> Function() networkRequest,
       Duration? ttlDuration,
       required Function fromJson}) async {
     if (ttlDuration == null) {
@@ -24,8 +25,8 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
         networkRequest, cacheKey, ttlDuration, fromJson);
   }
 
-  Future<T?> requestFromNetwork(
-      Function networkRequest, Function fromJson) async {
+  Future<T?> requestFromNetwork(Future<http.Response> Function() networkRequest,
+      Function fromJson) async {
     NetworkResponse response = await makeRequest(networkRequest);
 
     if (!response.isSuccessful()) {
@@ -36,8 +37,8 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     return data;
   }
 
-  Future<T?> checkCacheFirst(Function networkRequest, String cacheKey,
-      Duration ttlDuration, Function fromJson) async {
+  Future<T?> checkCacheFirst(Future<http.Response> Function() networkRequest,
+      String cacheKey, Duration ttlDuration, Function fromJson) async {
     T? cachedValue = await storage.get<T>(cacheKey);
 
     // Cache is available and fresh.
@@ -54,8 +55,8 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     return cachedValue;
   }
 
-  Future<T?> overwrite(
-      Function networkRequest, String cacheKey, Function fromJson) async {
+  Future<T?> overwrite(Future<http.Response> Function() networkRequest,
+      String cacheKey, Function fromJson) async {
     T? data = await requestFromNetwork(networkRequest, fromJson);
 
     if (data == null) {
