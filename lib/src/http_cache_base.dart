@@ -11,7 +11,7 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     await storage.set(cacheKey, networkValue);
   }
 
-  Future<T?> request<Type extends CacheItem>(
+  Future<T?> request(
       {required String cacheKey,
       required Function networkRequest,
       Duration? ttlDuration,
