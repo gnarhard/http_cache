@@ -21,7 +21,7 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     }
 
     return await checkCacheFirst(
-        networkRequest, cacheKey, ttlDuration!, fromJson);
+        networkRequest, cacheKey, ttlDuration, fromJson);
   }
 
   Future<T?> requestFromNetwork(
