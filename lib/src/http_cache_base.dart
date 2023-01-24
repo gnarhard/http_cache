@@ -6,7 +6,7 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
 
   HttpCache({required this.storage});
 
-  Future<void> updateCache<Type>(T networkValue, String cacheKey) async {
+  Future<void> updateCache(T networkValue, String cacheKey) async {
     networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
     await storage.set(cacheKey, networkValue);
   }
@@ -38,7 +38,7 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
 
   Future<T?> checkCacheFirst(Function networkRequest, String cacheKey,
       Duration ttlDuration, Function fromJson) async {
-    T? cachedValue = await storage.get(cacheKey);
+    T? cachedValue = await storage.get<T>(cacheKey);
 
     // Cache is available and fresh.
     if (cachedValue == null || _hasCacheExpired(cachedValue, ttlDuration)) {
