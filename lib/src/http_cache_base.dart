@@ -1,13 +1,10 @@
-import 'dart:io';
-
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
 class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
-  final HttpClient http;
 
-  HttpCache({required this.storage, required this.http});
+  HttpCache({required this.storage});
 
   Future<void> updateCache<Type>(T networkValue, String cacheKey) async {
     networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
