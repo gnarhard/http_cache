@@ -28,23 +28,30 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
 
   Future<T?> requestFromNetwork(Future<http.Response> Function() networkRequest,
       Function fromJson) async {
-    NetworkResponse<Map<String, dynamic>?, NetworkException> response =
+    NetworkResponse<Map<String, dynamic>?, NetworkException> networkResponse =
         await makeRequest(networkRequest);
 
-    if (!response.isSuccessful()) {
+    if (!networkResponse.isSuccessful()) {
       if (kDebugMode) {
-        response.printError();
+        printError(networkResponse.failure!);
       }
       return null;
     }
 
-    final jsonData = getJsonData(response);
+    final jsonData = getJsonData(networkResponse);
     if (jsonData == null) {
       return null;
     }
 
     T data = fromJson(jsonData);
     return data;
+  }
+
+  void printError(NetworkException failure) {
+    if (kDebugMode) {
+      print(
+          'Error ${failure.response!.statusCode}: ${failure.response!.reasonPhrase}');
+    }
   }
 
   Map<String, dynamic>? getJsonData(response) {
