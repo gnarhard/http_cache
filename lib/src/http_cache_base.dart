@@ -1,34 +1,41 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'dart:convert' show json;
+
+import 'package:flutter/foundation.dart' show compute, kDebugMode;
 import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
 class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
+  final String cacheKey;
+  final Duration? ttlDuration;
+  final bool useIsolate;
+  final Function fromJson;
+  final Future<http.Response> Function() networkRequest;
 
-  HttpCache({required this.storage});
+  HttpCache(
+      {required this.storage,
+      required this.cacheKey,
+      this.ttlDuration,
+      this.useIsolate = false,
+      required this.networkRequest,
+      required this.fromJson});
 
   Future<void> updateCache(T networkValue, String cacheKey) async {
     networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
     await storage.set(cacheKey, networkValue);
   }
 
-  Future<T?> request(
-      {required String cacheKey,
-      required Future<http.Response> Function() networkRequest,
-      Duration? ttlDuration,
-      required Function fromJson}) async {
+  Future<T?> request() async {
     if (ttlDuration == null) {
-      return await overwrite(networkRequest, cacheKey, fromJson);
+      return await overwrite();
     }
 
-    return await checkCacheFirst(
-        networkRequest, cacheKey, ttlDuration, fromJson);
+    return await checkCacheFirst();
   }
 
-  Future<T?> requestFromNetwork(Future<http.Response> Function() networkRequest,
-      Function fromJson) async {
-    NetworkResponse<Map<String, dynamic>?, NetworkException> networkResponse =
+  Future<T?> requestFromNetwork() async {
+    NetworkResponse<http.Response, NetworkException> networkResponse =
         await makeRequest(networkRequest);
 
     if (!networkResponse.isSuccessful()) {
@@ -38,13 +45,9 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
       return null;
     }
 
-    final jsonData = getJsonData(networkResponse);
-    if (jsonData == null) {
-      return null;
-    }
-
-    T data = fromJson(jsonData);
-    return data;
+    return useIsolate
+        ? await compute(parseJsonData, networkResponse)
+        : parseJsonData(networkResponse);
   }
 
   void printError(NetworkException failure) {
@@ -54,26 +57,29 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     }
   }
 
-  Map<String, dynamic>? getJsonData(response) {
+  T? parseJsonData(response) {
     final result = response.result();
+
     if (result == null) {
       return null;
     }
 
-    if (result['data'] == null) {
+    Map<String, dynamic> responseData =
+        json.decode(result.body) as Map<String, dynamic>;
+
+    if (responseData['data'] == null) {
       return null;
     }
 
-    return result['data'];
+    return fromJson(responseData['data']);
   }
 
-  Future<T?> checkCacheFirst(Future<http.Response> Function() networkRequest,
-      String cacheKey, Duration ttlDuration, Function fromJson) async {
+  Future<T?> checkCacheFirst() async {
     T? cachedValue = await storage.get<T>(cacheKey);
 
     // Cache is available and fresh.
-    if (cachedValue == null || _hasCacheExpired(cachedValue, ttlDuration)) {
-      T? data = await requestFromNetwork(networkRequest, fromJson);
+    if (cachedValue == null || _hasCacheExpired(cachedValue)) {
+      T? data = await requestFromNetwork();
 
       if (data != null) {
         await updateCache(data, cacheKey);
@@ -85,9 +91,8 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     return cachedValue;
   }
 
-  Future<T?> overwrite(Future<http.Response> Function() networkRequest,
-      String cacheKey, Function fromJson) async {
-    T? data = await requestFromNetwork(networkRequest, fromJson);
+  Future<T?> overwrite() async {
+    T? data = await requestFromNetwork();
 
     if (data == null) {
       return null;
@@ -97,9 +102,9 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     return data;
   }
 
-  bool _hasCacheExpired(CacheItem cachedValue, Duration ttlDuration) {
+  bool _hasCacheExpired(CacheItem cachedValue) {
     int nowMilliseconds = DateTime.now().millisecondsSinceEpoch;
-    int cacheExpiryMilliseconds = nowMilliseconds - ttlDuration.inMilliseconds;
+    int cacheExpiryMilliseconds = nowMilliseconds - ttlDuration!.inMilliseconds;
     bool hasCacheExpired =
         cachedValue.cachedMilliseconds < cacheExpiryMilliseconds;
     return hasCacheExpired;

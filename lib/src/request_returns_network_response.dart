@@ -1,5 +1,4 @@
 import 'dart:async' show TimeoutException;
-import 'dart:convert' show json;
 import 'dart:io' show SocketException;
 
 import 'package:http/http.dart' as http;
@@ -7,15 +6,13 @@ import 'package:http/http.dart' as http;
 import 'network_response.dart';
 
 mixin RequestReturnsNetworkResponse {
-  Future<NetworkResponse<Map<String, dynamic>, NetworkException>>
-      makeRequest<Type>(Future<http.Response> Function() request) async {
+  Future<NetworkResponse<http.Response, NetworkException>> makeRequest<Type>(
+      Future<http.Response> Function() request) async {
     try {
       http.Response response = await request();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Map<String, dynamic> responseData =
-            json.decode(response.body) as Map<String, dynamic>;
-        return NetworkResponse.success(responseData);
+        return NetworkResponse.success(response);
       }
 
       return NetworkResponse.failure(

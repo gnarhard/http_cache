@@ -17,8 +17,6 @@ void main() {
     });
     final http = HttpService(
         apiNamespace: '/api/v1',
-        apiUrl: 'https://example.com/api/v1',
-        publicImgPath: 'https://example.com/images',
         siteBaseUrl: 'https://example.com',
         hasConnectivity: () => true,
         getAuthTokenCallback: () => token);
