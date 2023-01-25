@@ -45,11 +45,9 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
       return null;
     }
 
-    String? responseBody = networkResponse.success!.body;
-
     Map<String, dynamic> data = useIsolate
-        ? await compute(parseJsonData, responseBody)
-        : parseJsonData(responseBody);
+        ? await compute(parseJsonData, networkResponse.success!.body)
+        : parseJsonData(networkResponse.success!.body);
 
     return fromJson(data);
   }
@@ -61,7 +59,7 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     }
   }
 
-  Map<String, dynamic> parseJsonData(String? responseBody) {
+  static Map<String, dynamic> parseJsonData(String? responseBody) {
     if (responseBody == null) {
       return {};
     }
