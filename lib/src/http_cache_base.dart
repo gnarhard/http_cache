@@ -14,6 +14,10 @@ class HttpCache with RequestReturnsNetworkResponse {
   Future<T?> request<T extends CacheItem>(incomingHttpCacheConfig) async {
     httpCacheConfig = incomingHttpCacheConfig;
 
+    if (httpCacheConfig?.networkRequest == null) {
+      throw Exception('networkRequest is required');
+    }
+
     if (httpCacheConfig?.ttlDuration == null) {
       return await overwrite();
     }
@@ -23,7 +27,7 @@ class HttpCache with RequestReturnsNetworkResponse {
 
   Future<T?> requestFromNetwork<T extends CacheItem>() async {
     NetworkResponse<http.Response, NetworkException> networkResponse =
-        await makeRequest<T>(httpCacheConfig!.networkRequest);
+        await makeRequest<T>(httpCacheConfig!.networkRequest!);
 
     if (!networkResponse.isSuccessful()) {
       if (kDebugMode) {

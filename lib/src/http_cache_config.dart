@@ -5,13 +5,13 @@ class HttpCacheConfig {
   final Duration? ttlDuration;
   final bool useIsolate;
   final Function fromJson;
-  final Future<http.Response> Function() networkRequest;
+  final Future<http.Response> Function()? networkRequest;
 
   HttpCacheConfig({
     required this.cacheKey,
     this.ttlDuration,
     this.useIsolate = false,
-    required this.networkRequest,
+    this.networkRequest,
     required this.fromJson,
   });
 }
