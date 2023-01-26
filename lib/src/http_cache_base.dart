@@ -5,38 +5,25 @@ import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
-class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
+class HttpCache with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
-  final String cacheKey;
-  final Duration? ttlDuration;
-  final bool useIsolate;
-  final Function fromJson;
-  final Future<http.Response> Function() networkRequest;
+  HttpCacheConfig? httpCacheConfig;
 
-  HttpCache(
-      {required this.storage,
-      required this.cacheKey,
-      this.ttlDuration,
-      this.useIsolate = false,
-      required this.networkRequest,
-      required this.fromJson});
+  HttpCache({required this.storage});
 
-  Future<void> updateCache(T networkValue, String cacheKey) async {
-    networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
-    await storage.set(cacheKey, networkValue);
-  }
+  Future<T?> request<T extends CacheItem>(incomingHttpCacheConfig) async {
+    httpCacheConfig = incomingHttpCacheConfig;
 
-  Future<T?> request() async {
-    if (ttlDuration == null) {
+    if (httpCacheConfig?.ttlDuration == null) {
       return await overwrite();
     }
 
     return await checkCacheFirst();
   }
 
-  Future<T?> requestFromNetwork() async {
+  Future<T?> requestFromNetwork<T extends CacheItem>() async {
     NetworkResponse<http.Response, NetworkException> networkResponse =
-        await makeRequest(networkRequest);
+        await makeRequest<T>(httpCacheConfig!.networkRequest);
 
     if (!networkResponse.isSuccessful()) {
       if (kDebugMode) {
@@ -45,11 +32,11 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
       return null;
     }
 
-    Map<String, dynamic> data = useIsolate
+    Map<String, dynamic> data = httpCacheConfig!.useIsolate
         ? await compute(parseJsonData, networkResponse.success!.body)
         : parseJsonData(networkResponse.success!.body);
 
-    return fromJson(data);
+    return httpCacheConfig!.fromJson(data);
   }
 
   void printError(NetworkException failure) {
@@ -73,15 +60,15 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     return responseData['data'];
   }
 
-  Future<T?> checkCacheFirst() async {
-    T? cachedValue = await storage.get<T>(cacheKey);
+  Future<T?> checkCacheFirst<T extends CacheItem>() async {
+    T? cachedValue = await getFromStorage<T>();
 
     // Cache is available and fresh.
     if (cachedValue == null || _hasCacheExpired(cachedValue)) {
       T? data = await requestFromNetwork();
 
       if (data != null) {
-        await updateCache(data, cacheKey);
+        await updateCache(data, httpCacheConfig!.cacheKey);
       }
 
       cachedValue = data;
@@ -90,22 +77,37 @@ class HttpCache<T extends CacheItem> with RequestReturnsNetworkResponse {
     return cachedValue;
   }
 
-  Future<T?> overwrite() async {
+  Future<T?> overwrite<T extends CacheItem>() async {
     T? data = await requestFromNetwork();
 
     if (data == null) {
       return null;
     }
 
-    await updateCache(data, cacheKey);
+    await updateCache<T>(data, httpCacheConfig!.cacheKey);
     return data;
   }
 
   bool _hasCacheExpired(CacheItem cachedValue) {
     int nowMilliseconds = DateTime.now().millisecondsSinceEpoch;
-    int cacheExpiryMilliseconds = nowMilliseconds - ttlDuration!.inMilliseconds;
+    int cacheExpiryMilliseconds =
+        nowMilliseconds - httpCacheConfig!.ttlDuration!.inMilliseconds;
     bool hasCacheExpired =
         cachedValue.cachedMilliseconds < cacheExpiryMilliseconds;
     return hasCacheExpired;
+  }
+
+  Future<void> updateCache<T extends CacheItem>(
+      T networkValue, String cacheKey) async {
+    networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
+    await setStorage(networkValue);
+  }
+
+  Future<T?> getFromStorage<T extends CacheItem>() async {
+    return await storage.get<T>(httpCacheConfig!.cacheKey);
+  }
+
+  Future<void> setStorage<T extends CacheItem>(T networkValue) async {
+    await storage.set(httpCacheConfig!.cacheKey, networkValue);
   }
 }

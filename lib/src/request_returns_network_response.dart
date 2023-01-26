@@ -3,11 +3,12 @@ import 'dart:io' show SocketException;
 
 import 'package:http/http.dart' as http;
 
-import 'network_response.dart';
+import '../http_cache.dart';
 
 mixin RequestReturnsNetworkResponse {
-  Future<NetworkResponse<http.Response, NetworkException>> makeRequest<Type>(
-      Future<http.Response> Function() request) async {
+  Future<NetworkResponse<http.Response, NetworkException>>
+      makeRequest<Type extends CacheItem>(
+          Future<http.Response> Function() request) async {
     try {
       http.Response response = await request();
 
