@@ -1,11 +1,11 @@
 import 'package:http/http.dart' as http;
 
 class HttpCacheConfig {
-  final String cacheKey;
-  final Duration? ttlDuration;
-  final bool useIsolate;
-  final Function fromJson;
-  final Future<http.Response> Function()? networkRequest;
+  String cacheKey;
+  Duration? ttlDuration;
+  bool useIsolate;
+  Function fromJson;
+  Future<http.Response> Function()? networkRequest;
 
   HttpCacheConfig({
     required this.cacheKey,
