@@ -1,4 +1,5 @@
 import 'dart:async' show TimeoutException;
+import 'dart:convert';
 import 'dart:io' show SocketException;
 
 import 'package:http/http.dart' as http;
@@ -16,8 +17,17 @@ mixin RequestReturnsNetworkResponse {
         return NetworkResponse.success(response);
       }
 
-      return NetworkResponse.failure(
-          NetworkException(response: response, type: NetworkError.serverError));
+      final responseBody = json.decode(response.body);
+      String errorMessage = '';
+
+      if (responseBody['message'] != null) {
+        errorMessage = responseBody['message'];
+      }
+
+      return NetworkResponse.failure(NetworkException(
+          response: response,
+          type: NetworkError.serverError,
+          error: errorMessage));
     } on SocketException {
       return NetworkResponse.failure(
           const NetworkException(type: NetworkError.couldNotReachServer));
@@ -26,7 +36,7 @@ mixin RequestReturnsNetworkResponse {
           const NetworkException(type: NetworkError.couldNotReachServer));
     } catch (error) {
       return NetworkResponse.failure(
-          NetworkException(type: NetworkError.serverError, error: error));
+          NetworkException(type: NetworkError.serverError, error: error.toString()));
     }
   }
 }

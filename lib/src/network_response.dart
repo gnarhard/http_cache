@@ -2,7 +2,7 @@ import 'package:http/http.dart';
 
 class NetworkException {
   final Response? response;
-  final dynamic error;
+  final String? error;
   final NetworkError type;
 
   const NetworkException({this.response, required this.type, this.error});

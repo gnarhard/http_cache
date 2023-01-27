@@ -50,7 +50,7 @@ class HttpCache with RequestReturnsNetworkResponse {
         return;
       }
       print(
-          '${failure.type.name}. Error ${failure.response!.statusCode}: ${failure.response!.reasonPhrase}.');
+          '${failure.type.name}. Error ${failure.response!.statusCode}: ${failure.response!.reasonPhrase}. Message: ${failure.error}');
     }
   }
 
