@@ -45,8 +45,12 @@ class HttpCache with RequestReturnsNetworkResponse {
 
   void printError(NetworkException failure) {
     if (kDebugMode) {
+      if (failure.response == null) {
+        print('Error: ${failure.type.name}');
+        return;
+      }
       print(
-          'Error ${failure.response!.statusCode}: ${failure.response!.reasonPhrase}');
+          '${failure.type.name}. Error ${failure.response!.statusCode}: ${failure.response!.reasonPhrase}.');
     }
   }
 
