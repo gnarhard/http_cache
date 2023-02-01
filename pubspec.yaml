@@ -14,10 +14,6 @@ dev_dependencies:
     git:
       url: https://github.com/gnarhard/hive_storage_service.git
       ref: main
-  mock_storage_service:
-    git:
-      url: https://github.com/gnarhard/mock_storage_service.git
-      ref: main
   http_service:
     git:
       url: https://github.com/gnarhard/http_service.git
@@ -25,7 +21,13 @@ dev_dependencies:
   json_annotation: ^4.8.0
   build_runner: ^2.3.3
   hive: ^2.2.3
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
 dependencies:
   http: ^0.13.5
   flutter:
     sdk: flutter
+  faker: ^2.1.0
+  get_it: ^7.2.0
