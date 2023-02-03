@@ -17,9 +17,8 @@ class PostAdapter extends TypeAdapter<Post> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Post(
-      title: fields[3] as String,
-      body: fields[4] as String,
-      cachedMilliseconds: fields[2] as int,
+      title: fields[2] as String,
+      body: fields[3] as String,
       id: fields[0] as int,
       userId: fields[1] as int,
     );
@@ -28,16 +27,14 @@ class PostAdapter extends TypeAdapter<Post> {
   @override
   void write(BinaryWriter writer, Post obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.userId)
       ..writeByte(2)
-      ..write(obj.cachedMilliseconds)
-      ..writeByte(3)
       ..write(obj.title)
-      ..writeByte(4)
+      ..writeByte(3)
       ..write(obj.body);
   }
 
@@ -59,7 +56,6 @@ class PostAdapter extends TypeAdapter<Post> {
 Post _$PostFromJson(Map<String, dynamic> json) => Post(
       title: json['title'] as String,
       body: json['body'] as String,
-      cachedMilliseconds: json['cachedMilliseconds'] as int? ?? 0,
       id: json['id'] as int,
       userId: json['userId'] as int,
     );
@@ -67,7 +63,6 @@ Post _$PostFromJson(Map<String, dynamic> json) => Post(
 Map<String, dynamic> _$PostToJson(Post instance) => <String, dynamic>{
       'id': instance.id,
       'userId': instance.userId,
-      'cachedMilliseconds': instance.cachedMilliseconds,
       'title': instance.title,
       'body': instance.body,
     };

@@ -5,6 +5,11 @@ import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+@GenerateNiceMocks([MockSpec<HttpCache>()])
+
 class HttpCache with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
   HttpCacheConfig? httpCacheConfig;
