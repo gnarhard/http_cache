@@ -25,9 +25,11 @@ dev_dependencies:
     sdk: flutter
   flutter_test:
     sdk: flutter
+  hive_generator: ^2.0.0
+  get_it: ^7.2.0
+  faker: ^2.1.0
+
 dependencies:
   http: ^0.13.5
   flutter:
     sdk: flutter
-  faker: ^2.1.0
-  get_it: ^7.2.0

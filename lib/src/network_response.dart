@@ -20,9 +20,9 @@ class NetworkResponse<Success, NetworkException> {
 
   NetworkResponse._(this.success, this.failure);
 
-  bool isSuccessful() => failure == null;
+  bool get isSuccessful => failure == null;
 
-  Success? result() => success;
+  Success? get result => success;
 }
 
 enum NetworkError {

@@ -8,10 +8,16 @@ import 'package:http_cache/src/request_returns_network_response.dart';
 class HttpCache with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
   HttpCacheConfig? httpCacheConfig;
+  final bool asyncStorage;
 
-  HttpCache({required this.storage});
+  String get ttlCacheKey => '${httpCacheConfig!.cacheKey}_ttl';
 
-  Future<T?> request<T extends CacheItem>(incomingHttpCacheConfig) async {
+  NetworkResponse<http.Response, NetworkException>? currentResponse;
+
+  HttpCache({required this.storage, required this.asyncStorage});
+
+  Future<T?> request<T>(incomingHttpCacheConfig) async {
+    currentResponse = null;
     httpCacheConfig = incomingHttpCacheConfig;
 
     if (httpCacheConfig?.networkRequest == null) {
@@ -19,42 +25,112 @@ class HttpCache with RequestReturnsNetworkResponse {
     }
 
     if (httpCacheConfig?.ttlDuration == null) {
-      return await overwrite();
+      return await overwrite<T>();
     }
 
-    return await checkCacheFirst();
+    return await checkCacheFirst<T>();
   }
 
-  Future<T?> requestFromNetwork<T extends CacheItem>() async {
-    NetworkResponse<http.Response, NetworkException> networkResponse =
-        await makeRequest<T>(httpCacheConfig!.networkRequest!);
+  Future<T?> checkCacheFirst<T>() async {
+    T? cachedValue = await getFromStorage<T>();
+    final bool cacheExpired = await _hasCacheExpired();
 
-    if (!networkResponse.isSuccessful()) {
-      if (kDebugMode) {
-        printError(networkResponse.failure!);
+    // Cache is available and fresh.
+    if (cachedValue == null || cacheExpired) {
+      currentResponse =
+          await requestFromNetwork(httpCacheConfig!.networkRequest!);
+
+      if (!currentResponse!.isSuccessful) {
+        return null;
       }
+
+      T? data = await convert<T>(currentResponse!.success!.body);
+
+      if (data == null) {
+        return null;
+      }
+
+      await updateCache<T>(data, httpCacheConfig!.cacheKey);
+
+      cachedValue = data;
+    }
+
+    return cachedValue;
+  }
+
+  Future<T?> overwrite<T>() async {
+    currentResponse =
+        await requestFromNetwork(httpCacheConfig!.networkRequest!);
+
+    if (!currentResponse!.isSuccessful) {
       return null;
     }
 
-    Map<String, dynamic> data = httpCacheConfig!.useIsolate
-        ? await compute(parseJsonData, networkResponse.success!.body)
-        : parseJsonData(networkResponse.success!.body);
+    T? data = await convert<T>(currentResponse!.success!.body);
 
-    return httpCacheConfig!.fromJson(data);
-  }
-
-  void printError(NetworkException failure) {
-    if (kDebugMode) {
-      if (failure.response == null) {
-        print('Error: ${failure.type.name}');
-        return;
-      }
-      print(
-          '${failure.type.name}. Error ${failure.response!.statusCode}: ${failure.response!.reasonPhrase}. Message: ${failure.error}');
+    if (data == null) {
+      return null;
     }
+
+    await updateCache<T>(data, httpCacheConfig!.cacheKey);
+    return data;
   }
 
-  static Map<String, dynamic> parseJsonData(String? responseBody) {
+  Future<bool> _hasCacheExpired() async {
+    late final int cachedMilliseconds;
+
+    int cacheExpiryMilliseconds = DateTime.now().millisecondsSinceEpoch -
+        httpCacheConfig!.ttlDuration!.inMilliseconds;
+
+    if (asyncStorage) {
+      cachedMilliseconds = await storage.getAsync(ttlCacheKey);
+    } else {
+      cachedMilliseconds = storage.get(ttlCacheKey);
+    }
+
+    return cachedMilliseconds < cacheExpiryMilliseconds;
+  }
+
+  Future<void> updateCache<T>(T data, String cacheKey) async {
+    final ttl = DateTime.now().millisecondsSinceEpoch;
+    await setStorage(data, ttl);
+  }
+
+  Future<T?> getFromStorage<T>() async {
+    if (asyncStorage) {
+      return await storage.getAsync(httpCacheConfig!.cacheKey);
+    }
+    return storage.get(httpCacheConfig!.cacheKey);
+  }
+
+  Future<void> setStorage<T>(T networkValue, int ttl) async {
+    if (asyncStorage) {
+      await storage.setAsync(httpCacheConfig!.cacheKey, networkValue);
+      await storage.setAsync(ttlCacheKey, ttl);
+      return;
+    }
+    storage.set(httpCacheConfig!.cacheKey, networkValue);
+    storage.set(ttlCacheKey, ttl);
+  }
+
+  Future<T?> convert<T>(String responseBody) async {
+    final data = httpCacheConfig!.useIsolate
+        ? await compute(parseJsonData, responseBody)
+        : parseJsonData(currentResponse!.success!.body);
+
+    if (data is List) {
+      final convertedData = [];
+      for (Map<String, dynamic> singleData in data) {
+        convertedData.add(httpCacheConfig!.fromJson(singleData));
+      }
+      return convertedData as T;
+    }
+
+    return data as T;
+  }
+
+  /// Decodes JSON into either a list of maps or a single map.
+  static parseJsonData(String? responseBody) {
     if (responseBody == null) {
       return {};
     }
@@ -65,57 +141,8 @@ class HttpCache with RequestReturnsNetworkResponse {
       return {};
     }
 
-    return responseData['data'];
-  }
-
-  Future<T?> checkCacheFirst<T extends CacheItem>() async {
-    T? cachedValue = await getFromStorage<T>();
-
-    // Cache is available and fresh.
-    if (cachedValue == null || _hasCacheExpired(cachedValue)) {
-      T? data = await requestFromNetwork();
-
-      if (data != null) {
-        await updateCache(data, httpCacheConfig!.cacheKey);
-      }
-
-      cachedValue = data;
-    }
-
-    return cachedValue;
-  }
-
-  Future<T?> overwrite<T extends CacheItem>() async {
-    T? data = await requestFromNetwork();
-
-    if (data == null) {
-      return null;
-    }
-
-    await updateCache<T>(data, httpCacheConfig!.cacheKey);
-    return data;
-  }
-
-  bool _hasCacheExpired(CacheItem cachedValue) {
-    int nowMilliseconds = DateTime.now().millisecondsSinceEpoch;
-    int cacheExpiryMilliseconds =
-        nowMilliseconds - httpCacheConfig!.ttlDuration!.inMilliseconds;
-    bool hasCacheExpired =
-        cachedValue.cachedMilliseconds < cacheExpiryMilliseconds;
-    return hasCacheExpired;
-  }
-
-  Future<void> updateCache<T extends CacheItem>(
-      T networkValue, String cacheKey) async {
-    networkValue.cachedMilliseconds = DateTime.now().millisecondsSinceEpoch;
-    await setStorage(networkValue);
-  }
-
-  Future<T?> getFromStorage<T extends CacheItem>() async {
-    return await storage.get<T>(httpCacheConfig!.cacheKey);
-  }
-
-  Future<void> setStorage<T extends CacheItem>(T networkValue) async {
-    await storage.set(httpCacheConfig!.cacheKey, networkValue);
+    return responseData['data'] is List
+        ? responseData['data']
+        : responseData['data'];
   }
 }
