@@ -88,5 +88,9 @@ void main() {
       expect(cachedData, isNotNull);
       expect(ttl! > 0, true);
     });
+
+    // todo: test: correctly requests from server when cache is stale
+    // todo: test: correctly requests from storage when cache is fresh
+    
   });
 }
