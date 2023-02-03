@@ -1,6 +1,6 @@
 import 'dart:convert' show json;
 
-import 'package:flutter/foundation.dart' show compute, kDebugMode;
+import 'package:flutter/foundation.dart' show compute;
 import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
@@ -9,8 +9,6 @@ class HttpCache with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
   HttpCacheConfig? httpCacheConfig;
   final bool asyncStorage;
-
-  String get ttlCacheKey => '${httpCacheConfig!.cacheKey}_ttl';
 
   NetworkResponse<http.Response, NetworkException>? currentResponse;
 
@@ -83,9 +81,9 @@ class HttpCache with RequestReturnsNetworkResponse {
         httpCacheConfig!.ttlDuration!.inMilliseconds;
 
     if (asyncStorage) {
-      cachedMilliseconds = await storage.getAsync(ttlCacheKey);
+      cachedMilliseconds = await storage.getAsync(httpCacheConfig!.ttlCacheKey);
     } else {
-      cachedMilliseconds = storage.get(ttlCacheKey);
+      cachedMilliseconds = storage.get(httpCacheConfig!.ttlCacheKey);
     }
 
     return cachedMilliseconds < cacheExpiryMilliseconds;
@@ -106,11 +104,11 @@ class HttpCache with RequestReturnsNetworkResponse {
   Future<void> setStorage<T>(T networkValue, int ttl) async {
     if (asyncStorage) {
       await storage.setAsync(httpCacheConfig!.cacheKey, networkValue);
-      await storage.setAsync(ttlCacheKey, ttl);
+      await storage.setAsync(httpCacheConfig!.ttlCacheKey, ttl);
       return;
     }
     storage.set(httpCacheConfig!.cacheKey, networkValue);
-    storage.set(ttlCacheKey, ttl);
+    storage.set(httpCacheConfig!.ttlCacheKey, ttl);
   }
 
   Future<T?> convert<T>(String responseBody) async {

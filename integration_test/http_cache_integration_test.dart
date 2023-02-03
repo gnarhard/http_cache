@@ -17,6 +17,7 @@ void main() {
       cacheKey: 'posts',
       fromJson: Post.fromJson,
     );
+
     late final httpCache = GetIt.I<HttpCache>();
     late final storageService = GetIt.I<StorageService>();
     late final httpService = GetIt.I<HttpService>();
@@ -39,40 +40,53 @@ void main() {
             getAuthTokenCallback: () => ''));
         GetIt.I.registerLazySingleton<HttpCache>(
             () => HttpCache(storage: storageService, asyncStorage: false));
+
+        storageService.openBox(cacheConfig.cacheKey, true);
+        storageService.openBox(cacheConfig.ttlCacheKey, false);
+
         registered = true;
       }
     });
 
-    // testWidgets("can make POST request and overwrite cache", (tester) async {
-    //   await tester.pumpAndSettle();
-
-    //   cacheConfig.ttlDuration = null;
-    //   cacheConfig.networkRequest = () async {
-    //     final response = await httpService
-    //         .post(Uri.parse('${httpService.apiUrl}/posts'), body: newUserData);
-
-    //     return response;
-    //   };
-
-    //   final networkCache = await httpCache.request(cacheConfig);
-
-    //   expect(mockHiveModel!.name, 'test');
-    // });
-
-    testWidgets("can make GET request and store new cache", (tester) async {
+    testWidgets("can make GET requests and store new cache", (tester) async {
       await tester.pumpAndSettle();
 
       cacheConfig.ttlDuration = null;
       cacheConfig.networkRequest = () async {
-        final response =
-            await httpService.get(Uri.parse('${httpService.apiUrl}/posts'));
-
-        return response;
+        return await httpService.get(Uri.parse('${httpService.apiUrl}/posts'));
       };
 
       final networkCache = await httpCache.request<List<Post>>(cacheConfig);
+      final cachedData = storageService.get(cacheConfig.cacheKey);
+      int? ttl = storageService.get<int>(cacheConfig.ttlCacheKey);
 
       expect(networkCache, isNotNull);
+      expect(networkCache!.first.id, 1);
+      expect(cachedData, isNotNull);
+      expect(ttl! > 0, true);
+    });
+
+    testWidgets("can make POST requests and store new cache", (tester) async {
+      await tester.pumpAndSettle();
+
+      final newPost = Post.make();
+
+      cacheConfig.ttlDuration = null;
+      cacheConfig.networkRequest = () async {
+        return await httpService.post(
+          Uri.parse('${httpService.apiUrl}/posts'),
+          body: newPost,
+        );
+      };
+
+      final networkCache = await httpCache.request<List<Post>>(cacheConfig);
+      final cachedData = storageService.get(cacheConfig.cacheKey);
+      int? ttl = storageService.get<int>(cacheConfig.ttlCacheKey);
+
+      expect(networkCache, isNotNull);
+      expect(networkCache!.first.id, 1);
+      expect(cachedData, isNotNull);
+      expect(ttl! > 0, true);
     });
   });
 }
