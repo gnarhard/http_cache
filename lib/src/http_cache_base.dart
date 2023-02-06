@@ -1,25 +1,19 @@
-import 'dart:convert' show json;
-
-import 'package:flutter/foundation.dart' show compute;
 import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-
-@GenerateNiceMocks([MockSpec<HttpCache>()])
-
 class HttpCache with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
   HttpCacheConfig? httpCacheConfig;
-  final bool asyncStorage;
+  final bool hasAsyncStorage;
+  bool didNetworkRequest = false;
 
   NetworkResponse<http.Response, NetworkException>? currentResponse;
 
-  HttpCache({required this.storage, required this.asyncStorage});
+  HttpCache({required this.storage, required this.hasAsyncStorage});
 
-  Future<T?> request<T>(incomingHttpCacheConfig) async {
+  Future<T?> request<T>(HttpCacheConfig incomingHttpCacheConfig) async {
+    didNetworkRequest = false;
     currentResponse = null;
     httpCacheConfig = incomingHttpCacheConfig;
 
@@ -42,12 +36,14 @@ class HttpCache with RequestReturnsNetworkResponse {
     if (cachedValue == null || cacheExpired) {
       currentResponse =
           await requestFromNetwork(httpCacheConfig!.networkRequest!);
+      didNetworkRequest = true;
 
       if (!currentResponse!.isSuccessful) {
         return null;
       }
 
-      T? data = await convert<T>(currentResponse!.success!.body);
+      T? data = await httpCacheConfig!
+          .jsonConverterCallback(currentResponse!.success!.body);
 
       if (data == null) {
         return null;
@@ -69,7 +65,8 @@ class HttpCache with RequestReturnsNetworkResponse {
       return null;
     }
 
-    T? data = await convert<T>(currentResponse!.success!.body);
+    T? data = await httpCacheConfig!
+        .jsonConverterCallback(currentResponse!.success!.body);
 
     if (data == null) {
       return null;
@@ -85,10 +82,12 @@ class HttpCache with RequestReturnsNetworkResponse {
     int cacheExpiryMilliseconds = DateTime.now().millisecondsSinceEpoch -
         httpCacheConfig!.ttlDuration!.inMilliseconds;
 
-    if (asyncStorage) {
-      cachedMilliseconds = await storage.getAsync(httpCacheConfig!.ttlCacheKey);
+    if (hasAsyncStorage) {
+      cachedMilliseconds = await storage
+          .getAsync(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
     } else {
-      cachedMilliseconds = storage.get(httpCacheConfig!.ttlCacheKey);
+      cachedMilliseconds =
+          storage.get(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
     }
 
     return cachedMilliseconds < cacheExpiryMilliseconds;
@@ -100,52 +99,20 @@ class HttpCache with RequestReturnsNetworkResponse {
   }
 
   Future<T?> getFromStorage<T>() async {
-    if (asyncStorage) {
+    if (hasAsyncStorage) {
       return await storage.getAsync(httpCacheConfig!.cacheKey);
     }
     return storage.get(httpCacheConfig!.cacheKey);
   }
 
   Future<void> setStorage<T>(T networkValue, int ttl) async {
-    if (asyncStorage) {
+    if (hasAsyncStorage) {
       await storage.setAsync(httpCacheConfig!.cacheKey, networkValue);
-      await storage.setAsync(httpCacheConfig!.ttlCacheKey, ttl);
+      await storage.setAsync(
+          HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey), ttl);
       return;
     }
     storage.set(httpCacheConfig!.cacheKey, networkValue);
-    storage.set(httpCacheConfig!.ttlCacheKey, ttl);
-  }
-
-  Future<T?> convert<T>(String responseBody) async {
-    final data = httpCacheConfig!.useIsolate
-        ? await compute(parseJsonData, responseBody)
-        : parseJsonData(currentResponse!.success!.body);
-
-    if (data is List) {
-      final convertedData = [];
-      for (Map<String, dynamic> singleData in data) {
-        convertedData.add(httpCacheConfig!.fromJson(singleData));
-      }
-      return convertedData as T;
-    }
-
-    return data as T;
-  }
-
-  /// Decodes JSON into either a list of maps or a single map.
-  static parseJsonData(String? responseBody) {
-    if (responseBody == null) {
-      return {};
-    }
-
-    final responseData = json.decode(responseBody) as Map<String, dynamic>;
-
-    if (responseData['data'] == null) {
-      return {};
-    }
-
-    return responseData['data'] is List
-        ? responseData['data']
-        : responseData['data'];
+    storage.set(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey), ttl);
   }
 }

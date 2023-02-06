@@ -6,4 +6,14 @@ class StorageService extends HiveStorageService
   StorageService(
       {required super.adapterRegistrationCallback,
       required super.compactionStrategy});
+
+  @override
+  Future<T?> getAsync<T>(String key) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> setAsync(String key, value) {
+    throw UnimplementedError();
+  }
 }
