@@ -1,9 +1,9 @@
 import 'package:http/http.dart' as http;
 
-class HttpCacheConfig {
+class HttpCacheConfig<T> {
   String cacheKey;
   Duration? ttlDuration;
-  Function jsonConverterCallback;
+  Future<T?> Function(String? jsonString) jsonConverterCallback;
   Future<http.Response> Function()? networkRequest;
 
   static String ttlCacheKey(String cacheKey) => '${cacheKey}_ttl';

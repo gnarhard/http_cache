@@ -7,7 +7,6 @@ import 'package:http_service/http_service.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:http_cache/src/empty_app.dart' as app;
 import 'package:http_cache/src/storage_service.dart';
-import 'package:http_cache/src/http_cache_base.mocks.dart';
 
 void main() {
   group('HTTP Cache', () {
@@ -50,14 +49,14 @@ void main() {
     testWidgets("can get data from server and store in cache", (tester) async {
       await tester.pumpAndSettle();
 
-      final cacheConfig = HttpCacheConfig(
+      final cacheConfig = HttpCacheConfig<List<Post>>(
         cacheKey: cacheKey,
         ttlDuration: null,
         networkRequest: () async {
           return await httpService
               .get(Uri.parse('${httpService.apiUrl}/posts'));
         },
-        jsonConverterCallback: (jsonString) {
+        jsonConverterCallback: (String? jsonString) async {
           if (jsonString == null) {
             return null;
           }
@@ -79,14 +78,14 @@ void main() {
         (tester) async {
       await tester.pumpAndSettle();
 
-      final cacheConfig = HttpCacheConfig(
+      final cacheConfig = HttpCacheConfig<List<Post>>(
         cacheKey: cacheKey,
         ttlDuration: const Duration(milliseconds: 1),
         networkRequest: () async {
           return await httpService
               .get(Uri.parse('${httpService.apiUrl}/posts'));
         },
-        jsonConverterCallback: (jsonString) {
+        jsonConverterCallback: (String? jsonString) async {
           if (jsonString == null) {
             return null;
           }
@@ -101,7 +100,7 @@ void main() {
 
       await tester.pump(Duration(milliseconds: 2));
 
-      final newNetworkCache = await httpCache.request<List<Post>>(cacheConfig);
+      await httpCache.request<List<Post>>(cacheConfig);
 
       expect(httpCache.didNetworkRequest, true);
     });
@@ -110,14 +109,14 @@ void main() {
         (tester) async {
       await tester.pumpAndSettle();
 
-      final cacheConfig = HttpCacheConfig(
+      final cacheConfig = HttpCacheConfig<List<Post>>(
         cacheKey: cacheKey,
         ttlDuration: const Duration(seconds: 1),
         networkRequest: () async {
           return await httpService
               .get(Uri.parse('${httpService.apiUrl}/posts'));
         },
-        jsonConverterCallback: (jsonString) {
+        jsonConverterCallback: (jsonString) async {
           if (jsonString == null) {
             return null;
           }
