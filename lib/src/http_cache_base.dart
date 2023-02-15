@@ -77,7 +77,7 @@ class HttpCache with RequestReturnsNetworkResponse {
   }
 
   Future<bool> _hasCacheExpired() async {
-    late final int cachedMilliseconds;
+    int? cachedMilliseconds;
 
     int cacheExpiryMilliseconds = DateTime.now().millisecondsSinceEpoch -
         httpCacheConfig!.ttlDuration!.inMilliseconds;
@@ -88,6 +88,10 @@ class HttpCache with RequestReturnsNetworkResponse {
     } else {
       cachedMilliseconds =
           storage.get(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
+    }
+
+    if (cachedMilliseconds == null) {
+      return true;
     }
 
     return cachedMilliseconds < cacheExpiryMilliseconds;
