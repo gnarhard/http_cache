@@ -83,11 +83,11 @@ class HttpCache with RequestReturnsNetworkResponse {
         httpCacheConfig!.ttlDuration!.inMilliseconds;
 
     if (hasAsyncStorage) {
-      cachedMilliseconds = await storage
-          .getAsync(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
+      cachedMilliseconds = await storage.getAsync<int>(
+          HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
     } else {
-      cachedMilliseconds =
-          storage.get(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
+      cachedMilliseconds = storage
+          .get<int>(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey));
     }
 
     if (cachedMilliseconds == null) {
@@ -104,9 +104,9 @@ class HttpCache with RequestReturnsNetworkResponse {
 
   Future<T?> getFromStorage<T>() async {
     if (hasAsyncStorage) {
-      return await storage.getAsync(httpCacheConfig!.cacheKey);
+      return await storage.getAsync<T>(httpCacheConfig!.cacheKey);
     }
-    return storage.get(httpCacheConfig!.cacheKey);
+    return storage.get<T>(httpCacheConfig!.cacheKey);
   }
 
   Future<void> setStorage<T>(T networkValue, int ttl) async {
