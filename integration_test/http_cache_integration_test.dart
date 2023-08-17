@@ -8,6 +8,8 @@ import 'package:integration_test/integration_test.dart';
 import 'package:http_cache/src/empty_app.dart' as app;
 import 'package:http_cache/src/storage_service.dart';
 
+// NOTE: ALL TESTS PASSED 8.16.2023
+
 void main() {
   group('HTTP Cache', () {
     IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +32,7 @@ void main() {
             apiNamespace: '',
             siteBaseUrl: 'https://jsonplaceholder.typicode.com',
             hasConnectivity: () => true,
-            getAuthTokenCallback: () => ''));
+            getAuthTokenCallback: () async => ''));
         GetIt.I.registerLazySingleton<HttpCache>(
             () => HttpCache(storage: storageService, hasAsyncStorage: false));
 
