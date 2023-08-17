@@ -1,6 +1,6 @@
 name: http_cache
 description: Caches HTTP requests for a Flutter app.
-version: 2.0.0
+version: 2.0.1
 
 environment:
   sdk: '>=2.18.6 <3.0.0'
