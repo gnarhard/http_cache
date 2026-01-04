@@ -3,11 +3,11 @@ abstract class CachesNetworkRequest {
     return null;
   }
 
-  void set(String key, dynamic value) {}
+  void set<T>(String key, T value) {}
 
   Future<T?> getAsync<T>(String key) async {
     return null;
   }
 
-  Future<void> setAsync(String key, dynamic value) async {}
+  Future<void> setAsync<T>(String key, dynamic value) async {}
 }

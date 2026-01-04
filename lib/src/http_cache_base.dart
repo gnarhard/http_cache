@@ -111,12 +111,13 @@ class HttpCache<T> with RequestReturnsNetworkResponse {
 
   Future<void> setStorage(T networkValue, int ttl) async {
     if (hasAsyncStorage) {
-      await storage.setAsync(httpCacheConfig!.cacheKey, networkValue);
-      await storage.setAsync(
+      await storage.setAsync<T>(httpCacheConfig!.cacheKey, networkValue);
+      await storage.setAsync<int>(
           HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey), ttl);
       return;
     }
-    storage.set(httpCacheConfig!.cacheKey, networkValue);
-    storage.set(HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey), ttl);
+    storage.set<T>(httpCacheConfig!.cacheKey, networkValue);
+    storage.set<int>(
+        HttpCacheConfig.ttlCacheKey(httpCacheConfig!.cacheKey), ttl);
   }
 }

@@ -13,7 +13,7 @@ class StorageService extends HiveStorageService
   }
 
   @override
-  Future<void> setAsync(String key, value) {
+  Future<void> setAsync<T>(String key, value) {
     throw UnimplementedError();
   }
 }

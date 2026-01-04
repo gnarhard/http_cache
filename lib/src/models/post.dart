@@ -30,19 +30,19 @@ class Post {
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);
 
-  static T fromJsonString<T>(String jsonString) {
+  static List<Post> fromJsonString(String jsonString) {
     final decodedData = json.decode(jsonString);
     final convertedData = <Post>[];
 
     if (decodedData is Map<String, dynamic>) {
-      return decodedData as T;
+      return decodedData.entries.map((e) => Post.fromJson(e.value)).toList();
     }
 
     for (Map<String, dynamic> singleData in decodedData) {
       convertedData.add(Post.fromJson(singleData));
     }
 
-    return convertedData as T;
+    return convertedData;
   }
 
   factory Post.make() {

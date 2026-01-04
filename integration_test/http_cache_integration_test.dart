@@ -7,7 +7,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:http_cache/src/empty_app.dart' as app;
 import 'package:http_cache/src/storage_service.dart';
 
-// NOTE: ALL TESTS PASSED 6.23.2025
+// NOTE: ALL TESTS PASSED 1.3.2026
 
 void main() {
   group('HTTP Cache', () {
@@ -32,11 +32,13 @@ void main() {
             siteBaseUrl: 'https://jsonplaceholder.typicode.com',
             hasConnectivity: () => true,
             getAuthTokenCallback: () async => '');
-        httpCache = HttpCache(storage: storageService, hasAsyncStorage: false);
+        httpCache = HttpCache<List<Post>>(
+            storage: storageService, hasAsyncStorage: false);
 
         await storageService.init();
-        storageService.openBox(cacheKey, true);
-        storageService.openBox(HttpCacheConfig.ttlCacheKey(cacheKey), false);
+        storageService.openBox<List<Post>>(cacheKey, false);
+        storageService.openBox<int>(
+            HttpCacheConfig.ttlCacheKey(cacheKey), false);
 
         registered = true;
       }
@@ -44,7 +46,10 @@ void main() {
       app.main();
     });
 
-    tearDown(() => storageService.destroy(cacheKey));
+    tearDown(() {
+      storageService.destroy<List<Post>>(cacheKey);
+      storageService.destroy<int>(HttpCacheConfig.ttlCacheKey(cacheKey));
+    });
 
     testWidgets("can get data from server and store in cache", (tester) async {
       await tester.pumpAndSettle();
@@ -58,14 +63,14 @@ void main() {
         },
         jsonConverterCallback: (String? jsonString) async {
           if (jsonString == null) {
-            return null;
+            return <Post>[];
           }
-          return Post.fromJsonString<List<Post>>(jsonString);
+          return Post.fromJsonString(jsonString);
         },
       );
 
       final networkCache = await httpCache.request(cacheConfig);
-      final cachedData = storageService.get(cacheConfig.cacheKey);
+      final cachedData = storageService.get<List<Post>>(cacheConfig.cacheKey);
       int? ttl = storageService.get<int>(HttpCacheConfig.ttlCacheKey(cacheKey));
 
       expect(networkCache, isNotNull);
@@ -89,7 +94,7 @@ void main() {
           if (jsonString == null) {
             return null;
           }
-          return Post.fromJsonString<List<Post>>(jsonString);
+          return Post.fromJsonString(jsonString);
         },
       );
 
@@ -120,7 +125,7 @@ void main() {
           if (jsonString == null) {
             return null;
           }
-          return Post.fromJsonString<List<Post>>(jsonString);
+          return Post.fromJsonString(jsonString);
         },
       );
 
@@ -140,7 +145,7 @@ void main() {
         return await httpService.get(Uri.parse('${httpService.apiUrl}/posts'));
       };
 
-      final newNetworkCache = await httpCache.request(cacheConfig);
+      await httpCache.request(cacheConfig);
 
       expect(httpCache.didNetworkRequest, false);
     });
