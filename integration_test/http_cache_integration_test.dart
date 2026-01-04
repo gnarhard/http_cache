@@ -1,4 +1,3 @@
-import 'package:get_it/get_it.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_cache/http_cache.dart';
@@ -14,27 +13,26 @@ void main() {
   group('HTTP Cache', () {
     IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-    late final httpCache = GetIt.I<HttpCache>();
-    late final storageService = GetIt.I<StorageService>();
-    late final httpService = GetIt.I<HttpService>();
+    late final HttpCache httpCache;
+    late final StorageService storageService;
+    late final HttpService httpService;
     bool registered = false;
     const String cacheKey = 'posts';
 
     setUp(() async {
       if (!registered) {
-        GetIt.I.registerLazySingleton(() => StorageService(
+        storageService = StorageService(
             adapterRegistrationCallback: () {
               Hive.registerAdapter(PostAdapter());
             },
             compactionStrategy: (entries, deletedEntries) =>
-                deletedEntries > 3));
-        GetIt.I.registerLazySingleton<HttpService>(() => HttpService(
+                deletedEntries > 3);
+        httpService = HttpService(
             apiNamespace: '',
             siteBaseUrl: 'https://jsonplaceholder.typicode.com',
             hasConnectivity: () => true,
-            getAuthTokenCallback: () async => ''));
-        GetIt.I.registerLazySingleton<HttpCache>(
-            () => HttpCache(storage: storageService, hasAsyncStorage: false));
+            getAuthTokenCallback: () async => '');
+        httpCache = HttpCache(storage: storageService, hasAsyncStorage: false);
 
         await storageService.init();
         storageService.openBox(cacheKey, true);
