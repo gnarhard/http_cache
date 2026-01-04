@@ -2,9 +2,9 @@ import 'package:http/http.dart' as http;
 import 'package:http_cache/http_cache.dart';
 import 'package:http_cache/src/request_returns_network_response.dart';
 
-class HttpCache with RequestReturnsNetworkResponse {
+class HttpCache<T> with RequestReturnsNetworkResponse {
   final CachesNetworkRequest storage;
-  HttpCacheConfig? httpCacheConfig;
+  HttpCacheConfig<T?>? httpCacheConfig;
   final bool hasAsyncStorage;
   bool didNetworkRequest = false;
 
@@ -12,7 +12,7 @@ class HttpCache with RequestReturnsNetworkResponse {
 
   HttpCache({required this.storage, required this.hasAsyncStorage});
 
-  Future<T?> request<T>(HttpCacheConfig incomingHttpCacheConfig) async {
+  Future<T?> request(HttpCacheConfig<T?> incomingHttpCacheConfig) async {
     didNetworkRequest = false;
     currentResponse = null;
     httpCacheConfig = incomingHttpCacheConfig;
@@ -22,14 +22,14 @@ class HttpCache with RequestReturnsNetworkResponse {
     }
 
     if (httpCacheConfig?.ttlDuration == null) {
-      return await overwrite<T>();
+      return await overwrite();
     }
 
-    return await checkCacheFirst<T>();
+    return await checkCacheFirst();
   }
 
-  Future<T?> checkCacheFirst<T>() async {
-    T? cachedValue = await getFromStorage<T>();
+  Future<T?> checkCacheFirst() async {
+    T? cachedValue = await getFromStorage();
     final bool cacheExpired = await _hasCacheExpired();
 
     // Cache is available and fresh.
@@ -49,7 +49,7 @@ class HttpCache with RequestReturnsNetworkResponse {
         return null;
       }
 
-      await updateCache<T>(data, httpCacheConfig!.cacheKey);
+      await updateCache(data, httpCacheConfig!.cacheKey);
 
       cachedValue = data;
     }
@@ -57,7 +57,7 @@ class HttpCache with RequestReturnsNetworkResponse {
     return cachedValue;
   }
 
-  Future<T?> overwrite<T>() async {
+  Future<T?> overwrite() async {
     currentResponse =
         await requestFromNetwork(httpCacheConfig!.networkRequest!);
 
@@ -72,7 +72,7 @@ class HttpCache with RequestReturnsNetworkResponse {
       return null;
     }
 
-    await updateCache<T>(data, httpCacheConfig!.cacheKey);
+    await updateCache(data, httpCacheConfig!.cacheKey);
     return data;
   }
 
@@ -97,19 +97,19 @@ class HttpCache with RequestReturnsNetworkResponse {
     return cachedMilliseconds < cacheExpiryMilliseconds;
   }
 
-  Future<void> updateCache<T>(T data, String cacheKey) async {
+  Future<void> updateCache(T data, String cacheKey) async {
     final ttl = DateTime.now().millisecondsSinceEpoch;
     await setStorage(data, ttl);
   }
 
-  Future<T?> getFromStorage<T>() async {
+  Future<T?> getFromStorage() async {
     if (hasAsyncStorage) {
       return await storage.getAsync<T>(httpCacheConfig!.cacheKey);
     }
     return storage.get<T>(httpCacheConfig!.cacheKey);
   }
 
-  Future<void> setStorage<T>(T networkValue, int ttl) async {
+  Future<void> setStorage(T networkValue, int ttl) async {
     if (hasAsyncStorage) {
       await storage.setAsync(httpCacheConfig!.cacheKey, networkValue);
       await storage.setAsync(

@@ -66,7 +66,7 @@ void main() {
         },
       );
 
-      final networkCache = await httpCache.request<List<Post>>(cacheConfig);
+      final networkCache = await httpCache.request(cacheConfig);
       final cachedData = storageService.get(cacheConfig.cacheKey);
       int? ttl = storageService.get<int>(HttpCacheConfig.ttlCacheKey(cacheKey));
 
@@ -95,14 +95,14 @@ void main() {
         },
       );
 
-      final networkCache = await httpCache.request<List<Post>>(cacheConfig);
+      final networkCache = await httpCache.request(cacheConfig);
 
       expect(networkCache, isNotNull);
       expect(networkCache!.first.id, 1);
 
       await tester.pump(Duration(milliseconds: 2));
 
-      await httpCache.request<List<Post>>(cacheConfig);
+      await httpCache.request(cacheConfig);
 
       expect(httpCache.didNetworkRequest, true);
     });
@@ -126,7 +126,7 @@ void main() {
         },
       );
 
-      final networkCache = await httpCache.request<List<Post>>(cacheConfig);
+      final networkCache = await httpCache.request(cacheConfig);
 
       expect(networkCache, isNotNull);
       expect(networkCache!.first.id, 1);
@@ -142,7 +142,7 @@ void main() {
         return await httpService.get(Uri.parse('${httpService.apiUrl}/posts'));
       };
 
-      final newNetworkCache = await httpCache.request<List<Post>>(cacheConfig);
+      final newNetworkCache = await httpCache.request(cacheConfig);
 
       expect(httpCache.didNetworkRequest, false);
     });

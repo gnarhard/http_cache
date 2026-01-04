@@ -8,14 +8,14 @@ class NetworkException {
   const NetworkException({this.response, required this.type, this.error});
 }
 
-class NetworkResponse<Success, NetworkException> {
+class NetworkResponse<Success, HttpNetworkException> {
   final Success? success;
-  final NetworkException? failure;
+  final HttpNetworkException? failure;
 
   factory NetworkResponse.success(Success success) =>
       NetworkResponse._(success, null);
 
-  factory NetworkResponse.failure(NetworkException failure) =>
+  factory NetworkResponse.failure(HttpNetworkException failure) =>
       NetworkResponse._(null, failure);
 
   NetworkResponse._(this.success, this.failure);
