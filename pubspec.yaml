@@ -1,30 +1,30 @@
 name: http_cache
 description: Caches HTTP requests for a Flutter app.
-version: 2.0.11
+version: 3.0.0
 
 environment:
-  sdk: '>=3.5.3 < 4.0.0'
+  sdk: '>=3.8.0 < 4.0.0'
 
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.16.0
-  hive_flutter: ^1.1.0
   json_serializable: ^6.6.0
   hive_storage_service:
     path: /Users/gerhard/Code/dart_packages/hive_storage_service
   http_service:
     path: /Users/gerhard/Code/dart_packages/http_service
-  json_annotation: ^4.8.0
+  json_annotation: ^4.9.0
   build_runner: ^2.3.3
-  hive: ^2.2.3
+  faker: ^2.1.0
+  hive_ce_generator: ^1.10.0
   integration_test:
     sdk: flutter
   flutter_test:
     sdk: flutter
-  hive_generator: ^2.0.0
-  faker: ^2.1.0
 
 dependencies:
   http: ^1.1.0
   flutter:
     sdk: flutter
+  hive_ce: ^2.16.0
+  hive_ce_flutter: ^2.3.3

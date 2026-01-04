@@ -1,22 +1,16 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:hive_flutter/adapters.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:faker/faker.dart';
 
 part 'post.g.dart';
 
-@HiveType(typeId: 0)
 @JsonSerializable()
 class Post {
-  @HiveField(0)
   final int id;
-  @HiveField(1)
   final int userId;
-  @HiveField(2)
   String title;
-  @HiveField(3)
   String body;
 
   Post({
